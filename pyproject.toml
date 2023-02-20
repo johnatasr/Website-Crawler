@@ -1,0 +1,18 @@
+[tool.poetry]
+name = "multi-scraper"
+version = "0.1.0"
+description = "A amazing scraper"
+authors = ["Johnatas Rabelo <johnatasrs60@gmail.com>"]
+readme = "README.md"
+packages = [{include = "multi_scraper"}]
+
+[tool.poetry.dependencies]
+python = "^3.8"
+beautifulsoup4 = "^4.11.2"
+requests = "^2.28.2"
+pytest = "^7.2.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
