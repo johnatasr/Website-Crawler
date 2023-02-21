@@ -10,4 +10,4 @@ RUN pip install --no-cache-dir poetry && \
 
 COPY . .
 
-CMD [ "python", "-m" , "main"]
+CMD ["python", "-m" , "main"]

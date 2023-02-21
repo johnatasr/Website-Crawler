@@ -12,7 +12,10 @@ To build an image and run it with the list of URLs in a text file, execute the f
 
 ```commandline
 docker build --tag websitesscraper .
-cat websites.txt | docker run --network=bridge -v $(pwd)/exports:/app/exports websitesscraper:latest
+```
+
+```commandline
+cat websites.txt | docker run -i -v $(pwd)/exports:/app/exports websitesscraper:latest
 ```
 
 ## Documentation

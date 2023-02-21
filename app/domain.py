@@ -1,7 +1,7 @@
 import dataclasses
 import re
 from dataclasses import dataclass
-from typing import Any, List, Dict
+from typing import Any, Dict, List
 
 
 @dataclass
@@ -26,7 +26,12 @@ class ScrapedWebsite:
             List: A list of sanitized phone numbers.
         """
         regex = re.compile(r"(\+?\d[\d\s]*\d|\(?\d+\)?[\d\s]*\d+|\d{4}[\s]*\d{4})")
-        return [match.group() for tag in self.phones for match in [regex.search(tag["href"])] if match]
+        return [
+            match.group()
+            for tag in self.phones
+            for match in [regex.search(tag["href"])]
+            if match
+        ]
 
     @classmethod
     def _get_url_logo(cls, logos: Any, url: str) -> str:
