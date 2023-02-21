@@ -1,26 +1,61 @@
 import dataclasses
-from dataclasses import dataclass, field
-from typing import List
+import re
+from dataclasses import dataclass
+from typing import Any, List, Dict
 
 
 @dataclass
 class ScrapedWebsite:
-
     website: str
-    logo: str
-    phones: List
-    regex_pattern: object
+    logo: Any
+    phones: Any
 
     def __post_init__(self):
-        self.phones = [self._sanitize_phone_number(number) for number in self.phones]
+        """
+        Post-initialization method that gets executed after the dataclass is initialized.
+        This method sanitizes the phone numbers and retrieves the URL for the website's logo.
+        """
+        self.phones: List = self._sanitize_phone_numbers()
+        self.logo: str = self._get_url_logo(self.logo, self.website)
 
-    def set_regex_compile(self, regex_pattern):
-        self.regex_pattern = regex_pattern
+    def _sanitize_phone_numbers(self) -> List:
+        """
+        Helper method that extracts phone numbers from the given input and returns a list of sanitized phone numbers.
 
-    def _sanitize_phone_number(self, number) -> str:
-        replacement_text = "PHONE_NUMBER_REMOVED"
-        return self.regex_pattern.sub(replacement_text, number)
+        Returns:
+            List: A list of sanitized phone numbers.
+        """
+        regex = re.compile(r"(\+?\d[\d\s]*\d|\(?\d+\)?[\d\s]*\d+|\d{4}[\s]*\d{4})")
+        return [match.group() for tag in self.phones for match in [regex.search(tag["href"])] if match]
 
-    def as_a_dict(self):
+    @classmethod
+    def _get_url_logo(cls, logos: Any, url: str) -> str:
+        """
+        Helper method that retrieves the URL for the website's logo from the given input.
+
+        Args:
+            logos (Any): The input logo data.
+            url (str): The URL of the website.
+
+        Returns:
+            str: The URL for the website's logo.
+        """
+        for logo in logos:
+            if "src" not in logo.attrs or logo["src"].startswith("data:"):
+                continue
+            if logo["src"].startswith("http"):
+                return logo["src"]
+            else:
+                src_url = logo["src"].lstrip("/")
+                logo_url = f"{url}{src_url}"
+                return logo_url
+        return ""
+
+    def as_a_dict(self) -> Dict:
+        """
+        Returns the dataclass as a dictionary.
+
+        Returns:
+            Dict: The dataclass as a dictionary.
+        """
         return dataclasses.asdict(self)
-

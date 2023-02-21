@@ -1,72 +1,96 @@
-import requests
-from bs4 import BeautifulSoup
-import concurrent.futures
-from typing import List
+import asyncio
 import json
+import logging
 import re
-from app.domain import ScrapedWebsite
+from http.client import HTTPException
+from typing import List
 from uuid import uuid4
 
+import aiohttp
+from bs4 import BeautifulSoup
 
-class ScraperExecutor(object):
+from app.domain import ScrapedWebsite
+from typing import Union
 
-    def __init__(self, urls_list: List, input_file):
-        self.data = []
+logging.basicConfig(level=logging.DEBUG)
+logger = logging.getLogger(__name__)
+
+
+class CrawlerExecutor(object):
+    """
+    Class that represents an executor for scraping multiple websites asynchronously.
+
+    Attributes:
+        urls_list (List[str]): A list of URLs to scrape.
+        executor_id (uuid): An unique identifier for each executor instance.
+    """
+    def __init__(self, urls_list: List[str]):
+        """
+        Constructor method for CrawlerExecutor.
+
+        Args:
+            urls_list (List[str]): A list of URLs to scrape.
+        """
         self.urls_list = urls_list
-        self.regex_pattern = re.compile(r'^\+?\d{1,3}[\s\d-()]*\d{3}[\s-]?\d{4}$')
-        self.failure_file = {}
         self.executor_id = uuid4()
 
-    def process_website(self, website):
-        # Send a request to the website
-        response = requests.get(website)
+    async def execute(self) -> None:
+        """
+        Crawl a list of websites asynchronously and export the results to a JSON file.
+        """
+        async with aiohttp.ClientSession() as session:
+            logger.debug("Starting process...")
+            tasks = []
+            for url in self.urls_list:
+                tasks.append(asyncio.ensure_future(self._process_website(url, session)))
+            results = await asyncio.gather(*tasks)
+        self._export_to_json(results)
+        logger.debug(results)
 
-        # Parse the HTML content using BeautifulSoup
-        soup = BeautifulSoup(response.content, 'html.parser')
+    async def _process_website(self, url: str, session: aiohttp.ClientSession) -> Union[dict, None]:
+        """
+        Process a single website asynchronously.
 
-        # Find the logo image tag and get the source URL
-        logo_url = soup.find('img', {'class': 'logo'})['src']
+        Args:
+          url (str): The URL of the website to scrape.
+          session (aiohttp.ClientSession): An instance of aiohttp.ClientSession.
 
-        # Find all phone numbers in the website content
-        phone_numbers = []
-        for element in soup.find_all('p'):
-            if "phone" in element.text.lower():
-                phone_numbers.append(element.text)
+        Returns:
+          Union[dict, None]: A dictionary containing the scraped data or None if an error occurred.
+        """
+        try:
+            async with session.get(
+                url, headers={"User-Agent": "Mozilla/5.0"}, timeout=10
+            ) as response:
+                response.raise_for_status()
+                content: str = await response.text()
+        except (aiohttp.ClientError, asyncio.TimeoutError, HTTPException):
+            logger.debug(f"Request Error crawling website: {url}")
+            logger.exception(f"Request Error crawling website: {url}")
+            return None
+        except Exception as e:
+            logger.debug(f"Unexpected error crawling website: {url} exp {e}")
+            logger.exception(f"Unexpected error crawling website: {url} exp {e}")
+            # return {"error": {"url": url, "exception": str(e)}}
+            return None
 
-        # Return the logo URL and phone numbers for the website
-        return website, logo_url, phone_numbers
+        soup = BeautifulSoup(content, "html.parser")
 
-    def execute(self):
-        with concurrent.futures.ThreadPoolExecutor() as executor:
-            # Submit each website to the executor and store the future object in a list
-            future_to_website = {executor.submit(self.process_website, website): website for website in self.urls_list}
+        scraped_obj = ScrapedWebsite(
+            website=url,
+            logo=soup.find_all("img", {"class": re.compile(r".*logo.*")}),
+            phones=soup.find_all("a", href=re.compile(r"tel:")),
+        )
+        return scraped_obj.as_a_dict()
 
-            # Iterate over the completed futures as they complete
-            for future in concurrent.futures.as_completed(future_to_website):
-                website = future_to_website[future]
-                try:
-                    # Get the result of the future and print it
-                    result = future.result()
-                    scraped_obj = ScrapedWebsite(
-                        website=result[0], logo=result[1], phones=result[2], regex_pattern=self.regex_pattern
-                    )
-                    self.data.append(scraped_obj.as_a_dict())
-                    print("Website: ", result[0])
-                    print("Logo URL: ", result[1])
-                    print("Phone numbers: ", result[2])
-                except Exception as exc:
-                    print("%r generated an exception: %s" % (website, exc))
+    def _export_to_json(self, data: List[dict]) -> None:
+        """
+         Export the data to a JSON file.
 
-    def export_to_json(self):
-        with open(f"../exports/scraper_data_{self.executor_id}.json", "w") as f:
-            # Write the JSON data to the file
-            json.dump(self.data, f)
-
-    def _export_failure(self, exception):
-        with open(f"../exports/scraper_exceptions_{self.executor_id}.json", "w") as f:
-            self.failure_file.update({"name_exp": str(exception)})
-            json.dump(self.failure_file, f)
-
-    def _get_input_file(self, input_file):
-        with open(input_file, 'r') as f:
-            self.urls_list = f.read().splitlines()
+         Args:
+             data (List[dict]): A list of dictionaries containing the scraped data.
+        """
+        with open(f"exports/scraper_data_{self.executor_id}.json", "w") as f:
+            logger.debug("Exporting file ...")
+            logger.debug("Please look at exports path to see all exported files")
+            json.dump(data, f)
