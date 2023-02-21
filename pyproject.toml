@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "websitesscraper"
+name = "websitecrawler"
 version = "0.1.0"
-description = "A amazing scraper"
+description = "A amazing web crawler"
 authors = ["Johnatas Rabelo <johnatasrs60@gmail.com>"]
 readme = "README.md"
 

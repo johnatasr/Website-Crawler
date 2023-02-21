@@ -45,8 +45,8 @@ class CrawlerExecutor(object):
             for url in self.urls_list:
                 tasks.append(asyncio.ensure_future(self._process_website(url, session)))
             results = await asyncio.gather(*tasks)
-        self._export_to_json(results)
         pprint(results)
+        self._export_to_json(results)
 
     async def _process_website(
         self, url: str, session: aiohttp.ClientSession
