@@ -18,6 +18,8 @@ docker build --tag websitesscraper .
 cat websites.txt | docker run -i -v $(pwd)/exports:/app/exports websitesscraper:latest
 ```
 
+The return will be in console and inside path exports as a json file.
+
 ## Documentation
 ### CrawlerExecutor
 
@@ -28,11 +30,11 @@ The CrawlerExecutor class is responsible for executing the crawling process. It 
 
 Crawl a list of websites asynchronously.
 
-#### _process_website(url: str, session) -> Union[dict, None]
+#### _process_website(url: str, session)
 
 Process a single website URL. This method is called asynchronously by the execute method for each website URL in the input list. The method returns a dictionary containing the scraped data for the website, or None if an error occurred during scraping.
 
-#### _export_to_json(data) (Plus)
+#### _export_to_json(data)
 
 Export the scraped data to a JSON file.
 
@@ -47,7 +49,7 @@ The URL of the scraped website.
 
 _logo: Any_
 
-A list of logo images found on the website.
+A logo url found on the website.
 
 _phones: Any_
 

@@ -92,5 +92,5 @@ class CrawlerExecutor(object):
         """
         with open(f"exports/scraper_data_{self.executor_id}.json", "w") as f:
             pprint("Exporting file ...")
-            pprint("Please look at exports path to see all exported files")
+            pprint("Please take a look at exports path to see all exported files")
             json.dump(data, f)
