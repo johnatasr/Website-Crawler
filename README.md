@@ -11,11 +11,11 @@ https://docs.docker.com/engine/install/
 To build an image and run it with the list of URLs in a text file, execute the following commands: 
 
 ```commandline
-docker build --tag websitesscraper .
+docker build --tag websitescrawaler .
 ```
 
 ```commandline
-cat websites.txt | docker run -i -v $(pwd)/exports:/app/exports websitesscraper:latest
+cat <YOUR_TEXT_FILE>>.txt | docker run -i -v $(pwd)/exports:/app/exports websitescrawaler:latest
 ```
 
 The return will be in console and inside **exports** path as a json file.
