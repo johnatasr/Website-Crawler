@@ -1,5 +1,5 @@
 .idea
 .pytest_cache
-exports/*
+exports/scraper_data*
 app/__pycache__/*
 __pycache__/*
