@@ -18,7 +18,7 @@ docker build --tag websitesscraper .
 cat websites.txt | docker run -i -v $(pwd)/exports:/app/exports websitesscraper:latest
 ```
 
-The return will be in console and inside path exports as a json file.
+The return will be in console and inside **exports** path as a json file.
 
 ## Documentation
 ### CrawlerExecutor
