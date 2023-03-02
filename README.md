@@ -15,10 +15,17 @@ docker build --tag websitescrawaler .
 ```
 
 ```commandline
-cat <YOUR_TEXT_FILE>>.txt | docker run -i -v $(pwd)/exports:/app/exports websitescrawaler:latest
+cat <YOUR_TEXT_FILE>>.txt | docker run --name websitescrawaler -i -v $(pwd)/exports:/app/exports websitescrawaler:latest
 ```
 
 The return will be in console and inside **exports** path as a json file.
+
+#### To run unit tests execute the command bellow:
+
+```commandline
+docker run -t -i --rm websitescrawaler:latest python -m unittest discover tests
+```
+
 
 ## Documentation
 ### CrawlerExecutor
